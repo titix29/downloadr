@@ -24,6 +24,7 @@ public class DownloadView extends GridPane {
 		int row = 0;
 		createFileRow(row++);
 		createOutputFolderRow(row++);
+		createActionRow(row++);
 	}
 	
 	private void createFileRow(int row) {
@@ -60,5 +61,17 @@ public class DownloadView extends GridPane {
 			folderT.setText(f.getAbsolutePath());
 		});
 		add(browse, 2, row);
+	}
+	
+	private void createActionRow(int row) {
+		GridPane rowGP = new GridPane();
+		rowGP.setHgap(10);
+		Button startB = new Button("Start");
+		rowGP.add(startB, 0, 0);
+		
+		Button stopB = new Button("Stop");
+		rowGP.add(stopB, 1, 0);
+		
+		add(rowGP, 1, row, 2, 1);
 	}
 }
