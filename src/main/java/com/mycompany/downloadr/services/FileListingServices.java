@@ -1,8 +1,8 @@
 package com.mycompany.downloadr.services;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.file.Path;
 
 /**
  * 
@@ -15,7 +15,7 @@ public interface FileListingServices {
 	 * Initialize the file listing services
 	 * @param sourceFile
 	 */
-	void init(File sourceFile);
+	void init(Path sourceFile);
 
 	/**
 	 * Returns number of files in source file

@@ -1,17 +1,30 @@
 package com.mycompany.downloadr.services;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 
 import javax.net.ssl.SSLContext;
 
+import org.apache.http.HttpResponse;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
+import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.protocol.HttpContext;
 import org.apache.http.ssl.SSLContextBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.common.base.Strings;
 
 public class DownloadServices {
 	
@@ -33,22 +46,45 @@ public class DownloadServices {
 	 * @param fileUrl
 	 * @param destinationFolder
 	 * @return
-	 * @throws IOException 
+	 * @throws Exception 
 	 */
-	public File download(URL fileUrl, File destinationFolder) throws IOException {
+	public Path download(URL fileUrl, Path destinationFolder) throws Exception {
 		return download(fileUrl, destinationFolder, null, null);
 	}
 	
 	/**
-	 * Download file with given NTLM authentication
+	 * Download file with given athentication
 	 * @param fileUrl
 	 * @param destinationFolder
 	 * @param user
 	 * @param password
 	 * @return
+	 * @throws Exception
 	 */
-	public File download(URL fileUrl, File destinationFolder, String user, String password) throws IOException {
+	public Path download(URL fileUrl, Path destinationFolder, String user, String password) throws Exception {
 		LOGGER.debug("Downloading file {} with username {} in folder {}", fileUrl, user, destinationFolder);
-		return null;
+
+		Path destinationFile = Paths.get(destinationFolder.toString(), fileUrl.getFile());
+		
+		HttpContext ctx = !Strings.isNullOrEmpty(user) ? getUserContext(user, password) : HttpClientContext.create();
+		HttpGet req = new HttpGet(fileUrl.toURI());
+		HttpResponse res = client.execute(req, ctx);
+
+		try (InputStream is = res.getEntity().getContent()) {
+			long bytes = Files.copy(is, destinationFile, StandardCopyOption.REPLACE_EXISTING);
+			LOGGER.debug("Copied {} bytes to {}", bytes, destinationFile);
+		}
+		
+		return destinationFile;
+	}
+	
+	private HttpContext getUserContext(String user, String password) {
+		HttpClientContext ctx = HttpClientContext.create();
+		
+		CredentialsProvider prov = new BasicCredentialsProvider();
+		prov.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(user, password));
+		ctx.setCredentialsProvider(prov);
+		
+		return ctx;
 	}
 }

@@ -1,9 +1,9 @@
 package com.mycompany.downloadr.services;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
+import java.nio.file.Path;
 
 
 /**
@@ -15,21 +15,21 @@ import java.nio.file.Files;
  */
 public class SimpleFileListing implements FileListingServices {
 	
-	private File source;
+	private Path source;
 
 	@Override
-	public void init(File sourceFile) {
+	public void init(Path sourceFile) {
 		this.source = sourceFile;
 	}
 
 	@Override
 	public long getFilesCount() throws IOException {
-		return Files.lines(source.toPath()).count();
+		return Files.lines(source).count();
 	}
 
 	@Override
 	public URL getFileAtIndex(long index) throws IOException {
-		String str = Files.lines(source.toPath()).skip(index - 1).findFirst().get();
+		String str = Files.lines(source).skip(index - 1).findFirst().get();
 		return new URL(str);
 	}
 

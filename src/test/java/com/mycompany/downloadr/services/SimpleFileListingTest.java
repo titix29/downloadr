@@ -2,7 +2,8 @@ package com.mycompany.downloadr.services;
 
 import static org.junit.Assert.assertEquals;
 
-import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -36,7 +37,7 @@ public class SimpleFileListingTest {
 				srv.getFileAtIndex(3).toString());
 	}
 	
-	private File getSample1() throws Exception {
-		return new File(getClass().getClassLoader().getResource("sample1.txt").toURI());
+	private Path getSample1() throws Exception {
+		return Paths.get(getClass().getClassLoader().getResource("sample1.txt").toURI());
 	}
 }
