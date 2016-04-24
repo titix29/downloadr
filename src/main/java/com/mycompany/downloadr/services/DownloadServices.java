@@ -6,6 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.Random;
 
 import javax.net.ssl.SSLContext;
 
@@ -64,7 +65,12 @@ public class DownloadServices {
 	public Path download(URL fileUrl, Path destinationFolder, String user, String password) throws Exception {
 		LOGGER.debug("Downloading file {} with username {} in folder {}", fileUrl, user, destinationFolder);
 
-		Path destinationFile = Paths.get(destinationFolder.toString(), fileUrl.getFile());
+		// Clean url to obtain file name
+		String fileStr = fileUrl.getPath();
+		if (fileStr.endsWith("/")) {
+			fileStr = fileStr.substring(0, fileStr.length() - 1);
+		}
+		Path destinationFile = Paths.get(destinationFolder.toString(), fileStr.substring(fileStr.lastIndexOf('/')));
 		
 		HttpContext ctx = !Strings.isNullOrEmpty(user) ? getUserContext(user, password) : HttpClientContext.create();
 		HttpGet req = new HttpGet(fileUrl.toURI());
@@ -74,6 +80,9 @@ public class DownloadServices {
 			long bytes = Files.copy(is, destinationFile, StandardCopyOption.REPLACE_EXISTING);
 			LOGGER.debug("Copied {} bytes to {}", bytes, destinationFile);
 		}
+		
+		// simulate long files download
+		Thread.sleep(new Random().nextInt(10) * 1000);
 		
 		return destinationFile;
 	}
