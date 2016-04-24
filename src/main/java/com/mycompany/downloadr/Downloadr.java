@@ -1,8 +1,9 @@
 package com.mycompany.downloadr;
 
-import com.mycompany.downloadr.services.DownloadServices;
+import com.mycompany.downloadr.view.DownloadView;
 
 import javafx.application.Application;
+import javafx.scene.Scene;
 import javafx.stage.Stage;
 
 /**
@@ -15,10 +16,11 @@ public class Downloadr extends Application {
 	@Override
 	public void start(Stage primaryStage) throws Exception {
 		primaryStage.setTitle("Downloadr");
-		primaryStage.show();
 		
-		DownloadServices srv = new DownloadServices();
-		srv.download(null, null);
+		DownloadView view = new DownloadView();
+		Scene scene = new Scene(view);
+		primaryStage.setScene(scene);
+		primaryStage.show();
 	}
 
 	public static void main(String[] args) {
