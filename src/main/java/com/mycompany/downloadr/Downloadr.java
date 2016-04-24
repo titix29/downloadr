@@ -1,5 +1,7 @@
 package com.mycompany.downloadr;
 
+import com.mycompany.downloadr.services.DownloadServices;
+
 import javafx.application.Application;
 import javafx.stage.Stage;
 
@@ -14,6 +16,9 @@ public class Downloadr extends Application {
 	public void start(Stage primaryStage) throws Exception {
 		primaryStage.setTitle("Downloadr");
 		primaryStage.show();
+		
+		DownloadServices srv = new DownloadServices();
+		srv.download(null, null);
 	}
 
 	public static void main(String[] args) {

@@ -1,0 +1,3 @@
+http://docs.oracle.com/javase/8/javafx/properties-binding-tutorial/binding.htm
+http://stackoverflow.com/questions/9691420/api-for-simple-file-line-count-functions-in-java
+http://code.makery.ch/library/javafx-8-tutorial/fr/part1/
