@@ -122,12 +122,12 @@ public class DownloadView extends GridPane {
 	}
 	
 	private void startDownload(@SuppressWarnings("unused") ActionEvent ae) {
-		vm.startDownload();
+		vm.start();
 		progressBar.setVisible(true);
 	}
 	
 	private void stopDownload(@SuppressWarnings("unused") ActionEvent ae) {
-		if (vm.stopDownload()) {
+		if (vm.stop()) {
 			progressBar.setVisible(false);
 		} else {
 			showError("Unable to cancel current worker");

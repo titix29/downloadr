@@ -7,46 +7,26 @@ import java.nio.file.Paths;
 import com.mycompany.downloadr.services.DownloadServices;
 import com.mycompany.downloadr.services.FileListingServices;
 import com.mycompany.downloadr.services.SimpleFileListing;
+import com.mycompany.downloadr.utils.BackgroundViewModel;
 
-import javafx.beans.property.ReadOnlyBooleanProperty;
-import javafx.beans.property.ReadOnlyDoubleProperty;
-import javafx.beans.property.ReadOnlyStringProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
-import javafx.concurrent.Service;
 import javafx.concurrent.Task;
 
-public class DownloadViewModel {
+public class DownloadViewModel extends BackgroundViewModel<Void> {
 
 	private final StringProperty inputFileProp;
 	private final StringProperty outputFolderProp;
 	private final StringProperty outputConsoleProp;
 	
-	private final Service<Void> worker;
-
 	public DownloadViewModel() {
 		this.inputFileProp = new SimpleStringProperty();
 		this.outputFolderProp = new SimpleStringProperty();
 		this.outputConsoleProp = new SimpleStringProperty("");
-		this.worker = new Service<Void>() {
-
-			@Override
-			protected Task<Void> createTask() {
-				return downloadTask();
-			}
-		};
 	}
 	
-	public void startDownload() {
-		// restart in case it has already been started
-		worker.restart();
-	}
-	
-	public boolean stopDownload() {
-		return worker.cancel();
-	}
-	
-	private Task<Void> downloadTask() {
+	@Override
+	protected Task<Void> backgroundTask() {
 		return new Task<Void>() {
 			
 			@Override
@@ -131,15 +111,4 @@ public class DownloadViewModel {
 		return outputConsoleProp;
 	}
 
-	public ReadOnlyBooleanProperty getRunningProperty() {
-		return worker.runningProperty();
-	}
-	
-	public ReadOnlyDoubleProperty getProgressProperty() {
-		return worker.progressProperty();
-	}
-	
-	public ReadOnlyStringProperty getMessageProperty() {
-		return worker.messageProperty();
-	}
 }
