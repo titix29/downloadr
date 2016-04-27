@@ -6,7 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.Random;
+import java.util.concurrent.CompletableFuture;
 
 import javax.net.ssl.SSLContext;
 
@@ -57,6 +57,26 @@ public class DownloadServices {
 	}
 	
 	/**
+	 * Asynchronously download the given file with no authentication
+	 * @param fileUrl
+	 * @param destinationFolder
+	 * @return
+	 * @throws Exception 
+	 */
+	public CompletableFuture<Path> downloadAsync(URL fileUrl, Path destinationFolder) {
+		final CompletableFuture<Path> res = new CompletableFuture<>();
+		CompletableFuture.runAsync(() -> {
+			try {
+				res.complete(download(fileUrl, destinationFolder, null, null));
+			} catch (Exception e) {
+				res.completeExceptionally(e);
+			}
+		});
+		
+		return res;
+	}
+	
+	/**
 	 * Download file with given athentication
 	 * @param fileUrl
 	 * @param destinationFolder
@@ -86,7 +106,7 @@ public class DownloadServices {
 		}
 		
 		// simulate long files download
-		Thread.sleep(new Random().nextInt(10) * 1000);
+		// Thread.sleep(new Random().nextInt(10) * 1000);
 		
 		return destinationFile;
 	}
