@@ -22,8 +22,6 @@ public class DownloadView extends GridPane {
 	
 	private DownloadViewModel vm;
 	
-	private ProgressBar progressBar;
-	
 	public DownloadView() throws Exception {
 		this.vm = new DownloadViewModel();
 		
@@ -108,11 +106,10 @@ public class DownloadView extends GridPane {
 		
 		ProgressBar progress = new ProgressBar(100);
 		progress.progressProperty().bind(vm.getProgressProperty());
-		progress.setVisible(false);
+		progress.visibleProperty().bind(vm.getRunningProperty());
 		// TODO : manage width properly (using colspan)
 		progress.setPrefWidth(500);
 		rowGP.add(progress, 0, 1);
-		this.progressBar = progress;
 		
 		Label statusL = new Label();
 		statusL.textProperty().bind(vm.getMessageProperty());
@@ -123,13 +120,10 @@ public class DownloadView extends GridPane {
 	
 	private void startDownload(@SuppressWarnings("unused") ActionEvent ae) {
 		vm.start();
-		progressBar.setVisible(true);
 	}
 	
 	private void stopDownload(@SuppressWarnings("unused") ActionEvent ae) {
-		if (vm.stop()) {
-			progressBar.setVisible(false);
-		} else {
+		if (!vm.stop()) {
 			showError("Unable to cancel current worker");
 		}
 	}
