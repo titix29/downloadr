@@ -4,17 +4,18 @@ import java.io.File;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
+import javafx.concurrent.Service;
 import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.layout.GridPane;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
@@ -26,10 +27,8 @@ import com.mycompany.downloadr.services.SimpleFileListing;
 
 public class DownloadView extends GridPane {
 	
-	private static final ExecutorService THREAD_POOL = Executors.newCachedThreadPool();
-	
 	private DownloadViewModel model;
-	private Task<Void> downloadTask;
+	private Service<Void> worker;
 	
 	private ProgressBar progressBar;
 	
@@ -40,7 +39,14 @@ public class DownloadView extends GridPane {
 		setVgap(10);
 		setPadding(new Insets(20, 20, 20, 20));
 		
-		defineDownloadTask();
+		Service<Void> w = new Service<Void>() {
+
+			@Override
+			protected Task<Void> createTask() {
+				return getDownloadTask();
+			}
+		};
+		this.worker = w;
 		
 		int row = 0;
 		createFileRow(row++);
@@ -49,10 +55,9 @@ public class DownloadView extends GridPane {
 		createResultsRow(row++);
 	}
 	
-	private void defineDownloadTask() {
-		// TODO : kill task when app is killed (maybe by inheriting Scene instead of Pane)
-		this.downloadTask = new Task<Void>() {
-
+	private Task<Void> getDownloadTask() {
+		return new Task<Void>() {
+			
 			@Override
 			protected Void call() throws Exception {
 				FileListingServices fileSrv = new SimpleFileListing();
@@ -76,8 +81,6 @@ public class DownloadView extends GridPane {
 					updateProgress(i, nbFiles);
 				}
 				
-				updateMessage("");
-				
 				return null;
 			}
 			
@@ -86,6 +89,13 @@ public class DownloadView extends GridPane {
 				String msg = String.format("Download failed : %s", getException().getMessage());
 				model.appendToConsole(msg);
 				updateProgress(1, 1);
+			}
+			
+			@Override
+			protected void cancelled() {
+				// release any ressource
+				model.appendToConsole("User cancelled task");
+				updateMessage("");
 			}
 		};
 	}
@@ -132,11 +142,13 @@ public class DownloadView extends GridPane {
 		rowGP.setHgap(10);
 		
 		Button startB = new Button("Start");
-		startB.setOnAction(this::startDownload); 
+		startB.setOnAction(this::startDownload);
+		startB.disableProperty().bind(worker.runningProperty());
 		rowGP.add(startB, 0, 0);
 		
 		Button stopB = new Button("Stop");
 		stopB.setOnAction(this::stopDownload);
+		stopB.disableProperty().bind(worker.runningProperty().not());
 		rowGP.add(stopB, 1, 0);
 		
 		add(rowGP, 1, row, 2, 1);
@@ -157,7 +169,7 @@ public class DownloadView extends GridPane {
 		rowGP.add(consoleTA, 0, 0);
 		
 		ProgressBar progress = new ProgressBar(100);
-		progress.progressProperty().bind(downloadTask.progressProperty());
+		progress.progressProperty().bind(worker.progressProperty());
 		progress.setVisible(false);
 		// TODO : manage width properly (using colspan)
 		progress.setPrefWidth(500);
@@ -165,18 +177,33 @@ public class DownloadView extends GridPane {
 		this.progressBar = progress;
 		
 		Label statusL = new Label();
-		statusL.textProperty().bind(downloadTask.messageProperty());
+		statusL.textProperty().bind(worker.messageProperty());
 		rowGP.add(statusL, 0, 2);
 		
 		add(rowGP, 0, row, 4, 1);
 	}
 	
-	private void startDownload(ActionEvent ae) {
+	private void startDownload(@SuppressWarnings("unused") ActionEvent ae) {
+		// reset if already launched
+		worker.reset();
+		worker.start();
 		progressBar.setVisible(true);
-		THREAD_POOL.submit(downloadTask);
 	}
 	
-	private void stopDownload(ActionEvent ae) {
-		// TODO
+	private void stopDownload(@SuppressWarnings("unused") ActionEvent ae) {
+		if (worker.cancel()) {
+			progressBar.setVisible(false);
+		} else {
+			showError("Unable to cancel current worker");
+		}
 	}
+	
+	private void showError(String message) {
+		Alert alert = new Alert(AlertType.ERROR);
+		alert.setTitle("Error");
+		alert.setHeaderText("Error");
+		alert.setContentText(message);
+		alert.show();
+	}
+
 }
