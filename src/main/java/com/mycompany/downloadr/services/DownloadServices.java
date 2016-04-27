@@ -31,10 +31,13 @@ public class DownloadServices {
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(DownloadServices.class);
 	
+	private static final String USER_AGENT = "HTTP Downloadr";
+	
 	private HttpClient client;
 	
 	public DownloadServices() throws Exception {
 		this.client = HttpClientBuilder.create()
+				.setUserAgent(USER_AGENT)
 				.setSSLContext(configureSSL()).build();
 	}
 	
