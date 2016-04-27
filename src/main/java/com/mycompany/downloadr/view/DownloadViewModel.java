@@ -40,7 +40,7 @@ public class DownloadViewModel extends BackgroundViewModel<Void> {
 				long nbFiles = fileSrv.getFilesCount();
 				for (long i = 1; i <= nbFiles; i++) {
 					if (isCancelled()) {
-						// user cliked on stop
+						// user clicked on stop
 						break;
 					}
 					url = fileSrv.getFileAtIndex(i);
