@@ -76,6 +76,7 @@ public class DownloadServices {
 		HttpGet req = new HttpGet(fileUrl.toURI());
 		HttpResponse res = client.execute(req, ctx);
 
+		// try-with-ressource and Files.copy ensure that is and destinationFile are closed
 		try (InputStream is = res.getEntity().getContent()) {
 			long bytes = Files.copy(is, destinationFile, StandardCopyOption.REPLACE_EXISTING);
 			LOGGER.debug("Copied {} bytes to {}", bytes, destinationFile);
