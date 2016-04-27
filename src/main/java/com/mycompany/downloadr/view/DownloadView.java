@@ -1,52 +1,35 @@
 package com.mycompany.downloadr.view;
 
 import java.io.File;
-import java.net.URL;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import javafx.concurrent.Service;
-import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
-import javafx.scene.control.Alert.AlertType;
 import javafx.scene.layout.GridPane;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 
 import com.google.common.base.StandardSystemProperty;
-import com.mycompany.downloadr.services.DownloadServices;
-import com.mycompany.downloadr.services.FileListingServices;
-import com.mycompany.downloadr.services.SimpleFileListing;
 
 public class DownloadView extends GridPane {
 	
-	private DownloadViewModel model;
-	private Service<Void> worker;
+	private DownloadViewModel vm;
 	
 	private ProgressBar progressBar;
 	
 	public DownloadView() throws Exception {
-		this.model = new DownloadViewModel();
+		this.vm = new DownloadViewModel();
 		
 		setHgap(10);
 		setVgap(10);
 		setPadding(new Insets(20, 20, 20, 20));
-		
-		Service<Void> w = new Service<Void>() {
-
-			@Override
-			protected Task<Void> createTask() {
-				return getDownloadTask();
-			}
-		};
-		this.worker = w;
 		
 		int row = 0;
 		createFileRow(row++);
@@ -55,58 +38,13 @@ public class DownloadView extends GridPane {
 		createResultsRow(row++);
 	}
 	
-	private Task<Void> getDownloadTask() {
-		return new Task<Void>() {
-			
-			@Override
-			protected Void call() throws Exception {
-				FileListingServices fileSrv = new SimpleFileListing();
-				DownloadServices downloadSrv = new DownloadServices();
-				fileSrv.init(Paths.get(model.getInputFile()));
-				
-				URL url;
-				Path downloaded;
-				long nbFiles = fileSrv.getFilesCount();
-				for (long i = 1; i <= nbFiles; i++) {
-					if (isCancelled()) {
-						// user cliked on stop
-						break;
-					}
-					url = fileSrv.getFileAtIndex(i);
-					updateMessage("Downloading file " + url);
-					
-					downloaded = downloadSrv.download(url, Paths.get(model.getOutputFolder()));
-
-					model.appendToConsole(String.format("File [%d/%d] downloaded at %s", i, nbFiles, downloaded));
-					updateProgress(i, nbFiles);
-				}
-				
-				return null;
-			}
-			
-			@Override
-			protected void failed() {
-				String msg = String.format("Download failed : %s", getException().getMessage());
-				model.appendToConsole(msg);
-				updateProgress(1, 1);
-			}
-			
-			@Override
-			protected void cancelled() {
-				// release any ressource
-				model.appendToConsole("User cancelled task");
-				updateMessage("");
-			}
-		};
-	}
-	
 	private void createFileRow(int row) {
 		add(new Label("Input file"), 0, row);
 		
 		final TextField fileT = new TextField();
 		fileT.setEditable(false);
 		fileT.setPrefWidth(250);
-		fileT.textProperty().bindBidirectional(model.getInputFileProp());
+		fileT.textProperty().bindBidirectional(vm.getInputFileProp());
 		add(fileT, 1, row);
 		
 		Button browse = new Button("...");
@@ -124,7 +62,7 @@ public class DownloadView extends GridPane {
 		final TextField folderT = new TextField();
 		folderT.setEditable(false);
 		folderT.setPrefWidth(250);
-		folderT.textProperty().bindBidirectional(model.getOutputFolderProp());
+		folderT.textProperty().bindBidirectional(vm.getOutputFolderProp());
 		add(folderT, 1, row);
 		
 		Button browse = new Button("...");
@@ -143,12 +81,12 @@ public class DownloadView extends GridPane {
 		
 		Button startB = new Button("Start");
 		startB.setOnAction(this::startDownload);
-		startB.disableProperty().bind(worker.runningProperty());
+		startB.disableProperty().bind(vm.getRunningProperty());
 		rowGP.add(startB, 0, 0);
 		
 		Button stopB = new Button("Stop");
 		stopB.setOnAction(this::stopDownload);
-		stopB.disableProperty().bind(worker.runningProperty().not());
+		stopB.disableProperty().bind(vm.getRunningProperty().not());
 		rowGP.add(stopB, 1, 0);
 		
 		add(rowGP, 1, row, 2, 1);
@@ -161,7 +99,7 @@ public class DownloadView extends GridPane {
 		TextArea consoleTA = new TextArea();
 		consoleTA.setEditable(false);
 		consoleTA.setPrefHeight(200);
-		consoleTA.textProperty().bindBidirectional(model.getOutputConsoleProp());
+		consoleTA.textProperty().bindBidirectional(vm.getOutputConsoleProp());
 		consoleTA.textProperty().addListener((obs, val, oldVal) -> {
 			// autoscroll on change : http://stackoverflow.com/questions/17799160/javafx-textarea-and-autoscroll
 			consoleTA.setScrollTop(Double.MAX_VALUE);
@@ -169,7 +107,7 @@ public class DownloadView extends GridPane {
 		rowGP.add(consoleTA, 0, 0);
 		
 		ProgressBar progress = new ProgressBar(100);
-		progress.progressProperty().bind(worker.progressProperty());
+		progress.progressProperty().bind(vm.getProgressProperty());
 		progress.setVisible(false);
 		// TODO : manage width properly (using colspan)
 		progress.setPrefWidth(500);
@@ -177,21 +115,19 @@ public class DownloadView extends GridPane {
 		this.progressBar = progress;
 		
 		Label statusL = new Label();
-		statusL.textProperty().bind(worker.messageProperty());
+		statusL.textProperty().bind(vm.getMessageProperty());
 		rowGP.add(statusL, 0, 2);
 		
 		add(rowGP, 0, row, 4, 1);
 	}
 	
 	private void startDownload(@SuppressWarnings("unused") ActionEvent ae) {
-		// reset if already launched
-		worker.reset();
-		worker.start();
+		vm.startDownload();
 		progressBar.setVisible(true);
 	}
 	
 	private void stopDownload(@SuppressWarnings("unused") ActionEvent ae) {
-		if (worker.cancel()) {
+		if (vm.stopDownload()) {
 			progressBar.setVisible(false);
 		} else {
 			showError("Unable to cancel current worker");
