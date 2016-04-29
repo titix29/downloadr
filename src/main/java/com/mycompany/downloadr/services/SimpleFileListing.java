@@ -5,7 +5,6 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-
 /**
  * {@link FileListingServices} implementation based on plain-text file
  * containing an URL at each line
