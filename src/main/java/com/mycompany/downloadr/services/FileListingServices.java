@@ -5,6 +5,7 @@ import java.net.URL;
 import java.nio.file.Path;
 
 /**
+ * Service producing file URLs from an input file
  * 
  * @author xavier.castel@gmail.com
  *
