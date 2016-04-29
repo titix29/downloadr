@@ -1,4 +1,4 @@
-package com.mycompany.downloadr.utils;
+package com.mycompany.downloadr.framework;
 
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.ReadOnlyDoubleProperty;
@@ -11,7 +11,7 @@ import javafx.concurrent.Task;
  * 
  * @param <T>	result type
  */
-public abstract class BackgroundViewModel<T> {
+public abstract class BackgroundViewModel<T> extends AbstractViewModel {
 
 	private final Service<T> srv;
 	

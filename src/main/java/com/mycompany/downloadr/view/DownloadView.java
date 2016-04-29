@@ -5,8 +5,7 @@ import java.nio.file.Paths;
 
 import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Alert.AlertType;
+import javafx.scene.Parent;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
@@ -17,60 +16,63 @@ import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 
 import com.google.common.base.StandardSystemProperty;
+import com.mycompany.downloadr.framework.AbstractView;
 
-public class DownloadView extends GridPane {
+public class DownloadView extends AbstractView<DownloadViewModel> {
 	
-	private DownloadViewModel vm;
+	private GridPane container;
 	
-	public DownloadView() throws Exception {
-		this.vm = new DownloadViewModel();
-		
-		setHgap(10);
-		setVgap(10);
-		setPadding(new Insets(20, 20, 20, 20));
+	@Override
+	public Parent createUI() {
+		container = new GridPane();
+		container.setHgap(10);
+		container.setVgap(10);
+		container.setPadding(new Insets(20, 20, 20, 20));
 		
 		int row = 0;
 		createFileRow(row++);
 		createOutputFolderRow(row++);
 		createActionRow(row++);
 		createResultsRow(row++);
+		
+		return container;
 	}
 	
 	private void createFileRow(int row) {
-		add(new Label("Input file"), 0, row);
+		container.add(new Label("Input file"), 0, row);
 		
 		final TextField fileT = new TextField();
 		fileT.setEditable(false);
 		fileT.setPrefWidth(250);
 		fileT.textProperty().bindBidirectional(vm.getInputFileProp());
-		add(fileT, 1, row);
+		container.add(fileT, 1, row);
 		
 		Button browse = new Button("...");
 		FileChooser fileFC = new FileChooser();
 		browse.setOnAction(ae -> {
-			File f = fileFC.showOpenDialog(DownloadView.this.getScene().getWindow());
+			File f = fileFC.showOpenDialog(container.getScene().getWindow());
 			fileT.setText(f.getAbsolutePath());
 		});
-		add(browse, 2, row);
+		container.add(browse, 2, row);
 	}
 	
 	private void createOutputFolderRow(int row) {
-		add(new Label("Output folder"), 0, row);
+		container.add(new Label("Output folder"), 0, row);
 		
 		final TextField folderT = new TextField();
 		folderT.setEditable(false);
 		folderT.setPrefWidth(250);
 		folderT.textProperty().bindBidirectional(vm.getOutputFolderProp());
-		add(folderT, 1, row);
+		container.add(folderT, 1, row);
 		
 		Button browse = new Button("...");
 		DirectoryChooser folderDC = new DirectoryChooser();
 		folderDC.setInitialDirectory(Paths.get(StandardSystemProperty.JAVA_IO_TMPDIR.value()).toFile());
 		browse.setOnAction(ae -> {
-			File f = folderDC.showDialog(DownloadView.this.getScene().getWindow());
+			File f = folderDC.showDialog(container.getScene().getWindow());
 			folderT.setText(f.getAbsolutePath());
 		});
-		add(browse, 2, row);
+		container.add(browse, 2, row);
 	}
 	
 	private void createActionRow(int row) {
@@ -87,7 +89,7 @@ public class DownloadView extends GridPane {
 		stopB.disableProperty().bind(vm.getRunningProperty().not());
 		rowGP.add(stopB, 1, 0);
 		
-		add(rowGP, 1, row, 2, 1);
+		container.add(rowGP, 1, row, 2, 1);
 	}
 	
 	private void createResultsRow(int row) {
@@ -115,7 +117,7 @@ public class DownloadView extends GridPane {
 		statusL.textProperty().bind(vm.getMessageProperty());
 		rowGP.add(statusL, 0, 2);
 		
-		add(rowGP, 0, row, 4, 1);
+		container.add(rowGP, 0, row, 4, 1);
 	}
 	
 	private void startDownload(@SuppressWarnings("unused") ActionEvent ae) {
@@ -128,12 +130,4 @@ public class DownloadView extends GridPane {
 		}
 	}
 	
-	private void showError(String message) {
-		Alert alert = new Alert(AlertType.ERROR);
-		alert.setTitle("Error");
-		alert.setHeaderText("Error");
-		alert.setContentText(message);
-		alert.show();
-	}
-
 }
