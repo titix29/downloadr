@@ -27,6 +27,12 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Strings;
 
+/**
+ * Remote http services
+ * 
+ * @author xavier.castel@gmail.com
+ *
+ */
 public class DownloadServices {
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(DownloadServices.class);
@@ -65,6 +71,8 @@ public class DownloadServices {
 	 */
 	public CompletableFuture<Path> downloadAsync(URL fileUrl, Path destinationFolder) {
 		final CompletableFuture<Path> res = new CompletableFuture<>();
+		// FIXME : if we want to cancel the underlying thread we should use ExecutorService and such
+		// http://stackoverflow.com/questions/26041012/how-to-release-resource-in-canceled-completablefuture
 		CompletableFuture.runAsync(() -> {
 			try {
 				res.complete(download(fileUrl, destinationFolder, null, null));
@@ -89,11 +97,12 @@ public class DownloadServices {
 		LOGGER.debug("Downloading file {} with username {} in folder {}", fileUrl, user, destinationFolder);
 
 		// Clean url to obtain file name
-		String fileStr = fileUrl.getPath();
-		if (fileStr.endsWith("/")) {
-			fileStr = fileStr.substring(0, fileStr.length() - 1);
+		String path = fileUrl.getPath();
+		if (path.endsWith("/")) {
+			path = path.substring(0, path.length() - 1);
 		}
-		Path destinationFile = Paths.get(destinationFolder.toString(), fileStr.substring(fileStr.lastIndexOf('/')));
+		String fileName = path.substring(path.lastIndexOf('/'));
+		Path destinationFile = Paths.get(destinationFolder.toString(), fileName);
 		
 		HttpContext ctx = !Strings.isNullOrEmpty(user) ? getUserContext(user, password) : HttpClientContext.create();
 		HttpGet req = new HttpGet(fileUrl.toURI());
@@ -104,9 +113,6 @@ public class DownloadServices {
 			long bytes = Files.copy(is, destinationFile, StandardCopyOption.REPLACE_EXISTING);
 			LOGGER.debug("Copied {} bytes to {}", bytes, destinationFile);
 		}
-		
-		// simulate long files download
-		// Thread.sleep(new Random().nextInt(10) * 1000);
 		
 		return destinationFile;
 	}
